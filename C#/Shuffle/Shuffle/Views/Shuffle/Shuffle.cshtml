@@ -1,0 +1,112 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model Shuffle.Models.ShuffleViewModel
+
+@section styles {
+    <style type="text/css">
+        .roulette_container {
+            width: 500px;
+            height: 500px;
+            margin: auto;
+        }
+
+        img {
+            width: 500px;
+            height: 500px;
+        }
+    </style>
+}
+
+<div class="container text-center">
+    <div class="page-header">
+        <h1>ルーレット</h1>
+    </div>
+    <div class="roulette_container">
+        <div id="roulette" style="display: none;">
+            <img src="../../Image/shuffle/toida.png" />
+            <img src="../../Image/shuffle/saito.png" />
+            <img src="../../Image/shuffle/kikuchi.png" />
+            <img src="../../Image/shuffle/takagi.png" />
+            <img src="../../Image/shuffle/takeda.png" />
+            <img src="../../Image/shuffle/tanishima.png" />
+        </div>
+    </div>
+    <hr />
+    <div>
+        <button id="btn-start" class="btn btn-large btn-primary"> START </button>
+    </div>
+</div>
+
+@section scripts
+{
+    <script src="../../bundles/Shuffle"></script>
+    <script type="text/javascript">
+        !(function () {
+            var connection = $.hubConnection();
+            var hubProxy = connection.createHubProxy('toidaHub');
+            var $roulette = $('#roulette');
+            var option = {
+                speed: 10,
+                duration: 5
+            };
+
+            hubProxy.on('shuffle', function (stopIndex) {
+                console.log(stopIndex);
+                option['stopImageNumber'] = stopIndex;
+                $roulette.roulette('option', option);
+                $roulette.roulette('start');
+            });
+
+            hubProxy.on('clearRegisters', function (message) {
+            });
+
+            hubProxy.on('register', function (name) {
+            });
+
+            connection.logging = true;
+
+            connection.connectionSlow(function () {
+                console.log("connectionSlow");
+            });
+
+            connection.reconnecting(function () {
+                console.log("reconnecting");
+            });
+
+            connection.reconnected(function () {
+                console.log("reconnected" + connection.transport.name);
+            });
+
+            connection.disconnected(function () {
+                console.log("disconnected");
+            });
+
+            connection.error(function (err) {
+                console.log("error:" + err);
+                console.log("stop");
+                connection.stop();
+            });
+
+            connection.start().done(function () {
+                $('#btn-start').click(function () {
+                    hubProxy.invoke('Shuffle');
+                    return false;
+                });
+
+                $('#register').click(function () {
+                    hubProxy.invoke('Register', $('#name').val());
+                    return false;
+                });
+
+                $('#clearRegisters').click(function () {
+                    hubProxy.invoke('ClearRegisters');
+                    return false;
+                });
+
+            }).fail(function (err) {
+                console.log('fail:' + err);
+            });
+        })();
+    </script>
+}
